@@ -167,6 +167,10 @@ Configuración para ejecutar pruebas en múltiples navegadores:
 
 ## Ejecución de Pruebas
 
+### Ingresar a carpeta /e2e-ui/
+
+cd e2e-ui
+
 ### Instalar dependencias
 
 npm install
