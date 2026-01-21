@@ -5,7 +5,11 @@
   "directories": {
     "test": "tests"
   },
-  "scripts": {},
+  "scripts": {
+    "report": "npx playwright show-report",
+    "ui": "npx playwright test --ui",
+    "test": "npx playwright test"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -13,5 +17,8 @@
   "devDependencies": {
     "@playwright/test": "^1.57.0",
     "@types/node": "^25.0.9"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3"
   }
 }
