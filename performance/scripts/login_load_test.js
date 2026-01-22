@@ -18,7 +18,7 @@ const csvData = new SharedArray('csv_data', () => {
       if (parts.length >= 2) {
         data.push({
           user: parts[0].trim(),
-          passwd: parts[1].trim()
+          passwd: parts[1].trim(),
         });
       }
     }
@@ -40,12 +40,12 @@ export const options = {
     },
   },
   thresholds: {
-    'http_req_duration': ['p(95)<1500'],
-    'error_rate': ['rate<0.03'],
+    http_req_duration: ['p(95)<1500'],
+    error_rate: ['rate<0.03'],
   },
 };
 
-export default function() {
+export default function () {
   const user = csvData[Math.floor(Math.random() * csvData.length)];
   
   if (!user || !user.user || !user.passwd) {
@@ -65,8 +65,12 @@ export default function() {
     timeout: '5s',
   };
 
-  group('Login Load Test', function() {
-    const response = http.post('https://fakestoreapi.com/auth/login', JSON.stringify(payload), params);
+  group('Login Load Test', () => {
+    const response = http.post(
+      'https://fakestoreapi.com/auth/login',
+      JSON.stringify(payload),
+      params
+    );
     
     responseTime.add(response.timings.duration);
     
@@ -76,6 +80,6 @@ export default function() {
       'respuesta contiene token': (r) => r.body && r.body.includes('token'),
     });
 
-    errorRate.add(!(response.status >= 200 && response.status < 300));
+    errorRate.add(!isSuccess);
   });
 }
