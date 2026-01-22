@@ -97,6 +97,30 @@ newman run postman/collections/Demoblaze\ -\ Auth\ API\ Tests.postman_collection
   -e postman/environments/test-env.postman_environment.json \
   -g postman/globals/workspace.postman_globals.json
 
+REPORTES DE NEWMAN
+
+Para generar reportes HTML visuales con Newman, instala el reporter htmlextra:
+
+Instalación del reporter HTML:
+npm install -g newman-reporter-htmlextra
+
+Generar reporte HTML:
+newman run "postman/collections/Demoblaze - Auth API Tests.postman_collection.json" ^
+  -e "postman/environments/test-env.postman_environment.json" ^
+  -g "postman/globals/workspace.postman_globals.json" ^
+  -r htmlextra ^
+  --reporter-htmlextra-export "reports/demoblaze-report.html" ^
+  --reporter-htmlextra-title "Demoblaze API Tests Report"
+
+Generar reporte JSON
+newman run "postman/collections/Demoblaze - Auth API Tests.postman_collection.json" ^
+  -e "postman/environments/test-env.postman_environment.json" ^
+  -g "postman/globals/workspace.postman_globals.json" ^
+  -r json ^
+  --reporter-json-export "reports/results.json"
+
+Los reportes se guardan en la carpeta reports/
+
 ESTRUCTURA DE LAS PRUEBAS
 
 Cada petición contiene:

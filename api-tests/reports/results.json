@@ -1,0 +1,837 @@
+{
+  "collection": {
+    "_": {
+      "postman_id": "a2719fb1-38a1-4680-b080-f4d7402f9723"
+    },
+    "item": [
+      {
+        "id": "e6f05b7f-3f21-4c0d-b622-b2b61d8c93d7",
+        "name": "Signup",
+        "request": {
+          "description": {
+            "content": "**1\\. Request: Signup**\n\n1.1. **Descripción general**\n\n- **Nombre de la request:** Signup\n    \n- **Método:** POST\n    \n- **URL:** `{{BASE_URL}}signup`\n    \n\n1.2. **Body (JSON)**\n\nEl body de la petición envía el usuario y la contraseña usando variables de Postman:\n\nJSON\n\n```\n{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}\n\n ```\n\n---\n\n**2\\. Variables utilizadas**\n\n2.1. **Variables de entorno (Environment)**\n\n- **BASE_URL**\n    \n    - valor base: `https://api.demoblaze.com/`\n        \n    - Se utiliza en la URL de la request como `{{BASE_URL}}`.\n        \n- **SIGNUP_SCENARIO**\n    \n    - Valores esperados:\n        \n        - `\"success\"` → escenario de registro exitoso.\n            \n        - Otros valores (por ejemplo `\"error\"`) → escenario de error controlado.\n            \n    - Esta variable controla el comportamiento tanto del script de Pre-request como del script de Tests.\n        \n\n2.2. **Variables globales (Globals)**\n\n- **username**\n    \n    - Se usa en el body como `{{username}}`.\n        \n    - Su valor se define en el script de Pre-request, dependiendo del escenario.\n        \n- **password**\n    \n    - Se usa en el body como `{{password}}`.\n        \n    - En tu captura actual, el valor está definido directamente como variable global.\n        \n    - Opcionalmente, puede ser seteado también desde el Pre-request script.\n        \n\n---\n\n**3\\. Script de Pre-request**\n\nCódigo actual:\n\njs\n\n```\n// Generar username aleatorio\nconst username = 'test_' + Math.random().toString(36).replace(/[^a-z0-9]/gi, '').slice(0, 5);\nconst password = '1234';\nconst scenario = pm.environment.get(\"SIGNUP_SCENARIO\");\nif (scenario === \"success\") {\n    // Set de variable global para username\n    pm.globals.set(\"username\", username);\n} else {\n    pm.globals.set(\"username\", \"camilo_test\"); // Escenario de error\n}\n\n ```\n\n3.1. **Objetivo del Pre-request**\n\nEl objetivo de este script es:\n\n- Generar datos de prueba antes de ejecutar la petición.\n    \n- Configurar el valor de la variable global `username` según el escenario definido en el entorno (`SIGNUP_SCENARIO`).\n    \n\n3.2. **Detalle paso a paso**\n\na) **Generación de username aleatorio**\n\n- const username = 'test_' + Math.random().toString(36).replace(/\\[^a-z0-9\\]/gi, '').slice(0, 5);\n    \n    - `Math.random().toString(36)` genera una cadena aleatoria con caracteres\n        \n    - `replace(/[^a-z0-9]/gi, '')` elimina cualquier carácter que no sea letra o número.\n        \n    - `slice(0, 5)` toma solo los primeros 5 caracteres limpios.\n        \n    - Resultado final: algo del estilo `test_ab3x9`.\n        \n\nb) **Definición de password fijo**\n\n- const password = '1234';\n    \n- Password de usuario ya registrado y conocido (camilo_test)\n    \n\nc) **Lectura del escenario desde el entorno**\n\n- const scenario = pm.environment.get(\"SIGNUP_SCENARIO\");\n    \n\nd) **Asignación de la variable global** **`username`** **según el escenario**\n\n- if (scenario === \"success\") { pm.globals.set(\"username\", username);}\n    \n    - Se guarda el username aleatorio en la variable global `username`.\n        \n    - La intención es simular el registro de un usuario nuevo que no existe aún.\n        \n- else { pm.globals.set(\"username\", \"camilo_test\"); // Escenario de error}\n    \n    - Se fija el valor `camilo_test` como username.\n        \n    - Se asume que este usuario ya existe, con lo cual se probará el manejo de errores en el endpoint.\n        \n\n---\n\n**4\\. Script de Tests (post-response)**\n\nCódigo actual:\n\njs\n\n```\nconst scenario = pm.environment.get(\"SIGNUP_SCENARIO\");\n// Validar 200 para cualquier respuesta (existente o no el usuario en ambos casos responde 200)\npm.test(\"El código de estado es 200\", () => {\n    pm.expect(pm.response.code, 'El códgio de estado NO es 200').to.eql(200);\n})\nif (scenario === \"success\") {\n    // Crear un nuevo usuario en signup\n    pm.test(\"Respuesta no cotiene mensajed de error\", () => {\n        pm.expect(pm.response.json().errorMessage, 'la respuesta trae la propiedad \"errorMessage\"').to.be.undefined;\n    })\n} else {\n    // Crear un usuario con datos inválidos en signup\n    pm.test(\"Respuesta cotiene mensaje de error\", () => {\n        pm.expect(pm.response.json().errorMessage, 'la respuesta no trae la propiedad \"errorMessage\"').to.not.be.undefined;\n    })\n}\n\n ```\n\n4.1. **Objetivo del script de Tests**\n\n- Validar que la API siempre responda con código HTTP 200.\n    \n- Validar que el contenido de la respuesta sea coherente con el escenario definido:\n    \n    - Sin mensaje de error en escenario de éxito.\n        \n    - Con mensaje de error en escenario de fallo.\n        \n\n4.2. **Detalle paso a paso**\n\na) **Lectura del escenario**\n\n- const scenario = pm.environment.get(\"SIGNUP_SCENARIO\");\n    \n\nb) **Validación del código de estado**\n\n- pm.test(\"El código de estado es 200\", () => { pm.expect(pm.response.code, 'El códgio de estado NO es 200').to.eql(200);});\n    \n    - Este test verifica que, tanto si el usuario se registra correctamente como si ya existía, la API responde siempre con 200.\n        \n\nc) **Validación de la respuesta en escenario \"success\"**\n\n- jsif (scenario === \"success\") { pm.test(\"Respuesta no cotiene mensajed de error\", () => { pm.expect(pm.response.json().errorMessage, 'la respuesta trae la propiedad \"errorMessage\"').to.be.undefined; });}\n    \n    - Se espera que la respuesta **no contenga** la propiedad `errorMessage`.\n        \n    - Indica que el registro fue exitoso y no hubo errores de negocio.\n        \n\nd) **Validación de la respuesta en escenario de error**\n\n- else { pm.test(\"Respuesta cotiene mensaje de error\", () => { pm.expect(pm.response.json().errorMessage, 'la respuesta no trae la propiedad \"errorMessage\"').to.not.be.undefined; });}\n    \n    - Se espera que la respuesta **sí contenga** la propiedad `errorMessage`.\n        \n    - Indica que la API está devolviendo un mensaje de error cuando se intenta registrar un usuario inválido o ya existente.\n        \n\n---\n\n**5\\. Resumen de comportamiento por escenario**\n\n5.1. **Escenario de éxito (****`SIGNUP_SCENARIO = \"success\"`****)**\n\n- Pre-request:\n    \n    - Genera un username aleatorio (`test_`).\n        \n    - Asigna ese valor a la variable global `username`.\n        \n- Request:\n    \n    - Envía un usuario nuevo en el body.\n        \n- Tests:\n    \n    - Verifica que el código HTTP sea 200.\n        \n    - Verifica que la respuesta no tenga la propiedad `errorMessage`.\n        \n\n5.2. **Escenario de error (****`SIGNUP_SCENARIO ≠ \"success\"`****, por ejemplo** **`\"error\"`****)**\n\n- Pre-request:\n    \n    - Asigna el valor fijo `camilo_test` a la variable global `username`.\n        \n- Request:\n    \n    - Envía un usuario que se asume ya existente o inválido.\n        \n- Tests:\n    \n    - Verifica que el código HTTP sea 200.\n        \n    - Verifica que la respuesta sí tenga la propiedad `errorMessage`.\n        \n\n---",
+            "type": "text/plain"
+          },
+          "url": {
+            "host": [
+              "{{BASE_URL}}signup"
+            ],
+            "query": [],
+            "variable": []
+          },
+          "method": "POST",
+          "body": {
+            "mode": "raw",
+            "raw": "{\r\n    \"username\": \"{{username}}\",\r\n    \"password\": \"{{password}}\"\r\n}",
+            "options": {
+              "raw": {
+                "language": "json"
+              }
+            }
+          }
+        },
+        "response": [],
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "id": "490b785b-00a2-4fd5-852a-a97974a59166",
+              "type": "text/javascript",
+              "packages": {},
+              "exec": [
+                "const scenario = pm.environment.get(\"SIGNUP_SCENARIO\");\r",
+                "// Validar 200 para cualquier respuesta (existente o no el usuario en ambos casos responde 200)\r",
+                "pm.test(\"El código de estado es 200\", () => {\r",
+                "    pm.expect(pm.response.code, 'El códgio de estado NO es 200').to.eql(200);\r",
+                "})\r",
+                "if (scenario === \"success\") {\r",
+                "    // Crear un nuevo usuario en signup\r",
+                "    pm.test(\"Respuesta no cotiene mensajed de error\", () => {\r",
+                "        pm.expect(pm.response.json().errorMessage, 'la respuesta trae la propiedad \"errorMessage\"').to.be.undefined;\r",
+                "    })\r",
+                "} else {\r",
+                "    // Crear un usuario con datos inválidos en signup\r",
+                "    pm.test(\"Respuesta cotiene mensaje de error\", () => {\r",
+                "        pm.expect(pm.response.json().errorMessage, 'la respuesta no trae la propiedad \"errorMessage\"').to.not.be.undefined;\r",
+                "    })\r",
+                "}\r",
+                ""
+              ],
+              "_lastExecutionId": "5b2c5083-130c-4129-948f-18dffe226345"
+            }
+          },
+          {
+            "listen": "prerequest",
+            "script": {
+              "id": "79000560-d63a-4a0a-b4cc-c5ba4b3904a4",
+              "type": "text/javascript",
+              "packages": {},
+              "exec": [
+                "// Generar username aleatorio\r",
+                "const username = 'test_' + Math.random().toString(36).replace(/[^a-z0-9]/gi, '').slice(0, 5);\r",
+                "const password = '1234';\r",
+                "\r",
+                "const scenario = pm.environment.get(\"SIGNUP_SCENARIO\");\r",
+                "if (scenario === \"success\") {\r",
+                "    // Set de variable global para username\r",
+                "    pm.globals.set(\"username\", username);\r",
+                "} else {\r",
+                "    pm.globals.set(\"username\", \"camilo_test\"); // Escenario de error\r",
+                "}"
+              ],
+              "_lastExecutionId": "bfab7dd1-6d8c-4485-85a3-52e80036c193"
+            }
+          }
+        ]
+      },
+      {
+        "id": "3e5f228f-02cf-425e-8ad3-d640973ce78e",
+        "name": "Login",
+        "request": {
+          "description": {
+            "content": "**1\\. Request: Login**\n\n1.1. **Descripción general**\n\n- **Nombre de la request:** Login\n    \n- **Método:** POST\n    \n- **URL:** `{{BASE_URL}}login`\n    \n\n1.2. **Body (JSON)**\n\nLa petición envía credenciales usando variables de Postman:\n\nJSON\n\n```\n{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}\n\n ```\n\n---\n\n**2\\. Variables utilizadas**\n\n2.1. **Variables de entorno (Environment)**\n\n- **BASE_URL**\n    \n    - Ejemplo: `https://api.demoblaze.com/`\n        \n    - Se utiliza en la URL como `{{BASE_URL}}`.\n        \n- **LOGIN_SCENARIO**\n    \n    - Define qué tipo de prueba se va a ejecutar para el login.\n        \n    - Valores esperados (según tu captura):\n        \n        - `\"success\"` → login exitoso (usuario y contraseña correctos).\n            \n        - `\"error_user\"` → error porque el usuario no existe.\n            \n        - `\"error_pass\"` → error porque la contraseña es incorrecta.\n            \n    - Esta variable controla tanto el pre-request como los tests.\n        \n\n2.2. **Variables globales (Globals)**\n\n- **username**\n    \n- **password**\n    \n\nEstas variables son las que finalmente se usan en el body:\n\nJSON\n\n```\n{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}\n\n ```\n\nSu valor se ajusta dinámicamente en el script de Pre-request, dependiendo del escenario definido en `LOGIN_SCENARIO`.\n\n---\n\n**3\\. Script de Pre-request**\n\nCódigo actual:\n\njs\n\n```\nconst usernameError = Math.random().toString(36).replace(/[^a-z0-9]/gi, '').slice(0, 10);\nconst passwordError = Math.random().toString(36).replace(/[^a-z0-9]/gi, '').slice(0, 10);\nconst scenario = pm.environment.get(\"LOGIN_SCENARIO\");\nif (scenario === \"success\") {\n    // Set de variable global para username\n    pm.globals.set(\"username\", 'camilo_test');\n    pm.globals.set(\"password\", '1234');\n} else if (scenario === 'error_user') {\n    pm.globals.set(\"username\", usernameError); // Escenario de error\n    pm.globals.set('password', '1234')\n} else {\n    pm.globals.set(\"username\", 'camilo_test'); // Escenario de error\n    pm.globals.set('password', passwordError)\n}\n\n ```\n\n3.1. **Objetivo del Pre-request**\n\n- Preparar los datos de entrada para el login (`username` y `password`) antes de enviar la petición.\n    \n- Simular distintos escenarios de login:\n    \n    - Login correcto.\n        \n    - Usuario inexistente.\n        \n    - Contraseña incorrecta.\n        \n\n3.2. **Detalle paso a paso**\n\na) **Generación de datos de error**\n\n- const usernameError = Math.random().toString(36).replace(/\\[^a-z0-9\\]/gi, '').slice(0, 10);const passwordError = Math.random().toString(36).replace(/\\[^a-z0-9\\]/gi, '').slice(0, 10);\n    \n    - `Math.random().toString(36)` genera una cadena pseudoaleatoria con caracteres `0-9` y `a-z`.\n        \n    - `replace(/[^a-z0-9]/gi, '')` elimina cualquier carácter no alfaumerico.\n        \n    - `slice(0, 10)` se queda con un máximo de 10 caracteres.\n        \n    - `usernameError` se usará como usuario inexistente; `passwordError` como contraseña incorrecta.\n        \n\nb) **Lectura del escenario desde el entorno**\n\n- const scenario = pm.environment.get(\"LOGIN_SCENARIO\");\n    \n\nc) **Asignación de variables globales según el escenario**\n\n- if (scenario === \"success\") { pm.globals.set(\"username\", 'camilo_test'); pm.globals.set(\"password\", '1234');}\n    \n    - Se usa un usuario fijo conocido (`camilo_test`) y una contraseña fija (`1234`).\n        \n    - Se espera que estas credenciales sean válidas en el sistema para que el login sea exitoso.\n        \n- else if (scenario === 'error_user') { pm.globals.set(\"username\", usernameError); // Escenario de error pm.globals.set('password', '1234');}\n    \n    - El `username` se reemplaza por un valor aleatorio que, en teoría, **no existe** en el sistema.\n        \n    - La contraseña se mantiene correcta (`1234`).\n        \n    - Se simula el caso de “usuario no encontrado”.\n        \n- else { pm.globals.set(\"username\", 'camilo_test'); // Escenario de error pm.globals.set('password', passwordError);}\n    \n    - Se usa un usuario válido (`camilo_test`), pero se cambia la contraseña por un `passwordError` aleatorio.\n        \n    - Se simula el caso de “contraseña incorrecta para un usuario existente”.\n        \n\nd) **Relación con el body de la petición**\n\n- JSON{ \"username\": \"{{username}}\", \"password\": \"{{password}}\"}\n    \n    tomará los valores que el Pre-request haya establecido según el escenario.\n    \n\n---\n\n**4\\. Script de Tests (post-response)**\n\nCódigo actual:\n\njs\n\n```\nconst scenario = pm.environment.get(\"LOGIN_SCENARIO\");\n// Validar 200 para cualquier respuesta (existente o no el usuario en ambos casos responde 200)\npm.test(\"El código de estado es 200\", () => {\n    pm.expect(pm.response.code, 'El códgio de estado NO es 200').to.eql(200);\n})\nif (scenario === \"success\") {\n    // Usuario y password correcto en login\n    pm.test(\"Respuesta no cotiene mensaje de error\", () => {\n        pm.expect(pm.response.json().errorMessage, 'la respuesta trae la propiedad \"errorMessage\"').to.be.undefined;\n    })\n} else if (scenario === 'error_user') {\n    // nombre de Usuario incorrecto\n    pm.test(\"Respuesta contiene mensaje de error\", () => {\n        pm.expect(pm.response.json().errorMessage, 'la respuesta no trae la propiedad \"errorMessage\"').to.not.be.undefined;\n    })\n    pm.test(\"Respuesta contiene 'User does not exist.'\", () => {\n        pm.expect(pm.response.json().errorMessage, 'Respuesta no cotiene \"User does not exist.\"').include('User does not exist');\n    })\n} else {\n    // password de Usuario incorrecto\n    pm.test(\"Respuesta contiene mensaje de error\", () => {\n        pm.expect(pm.response.json().errorMessage, 'la respuesta no trae la propiedad \"errorMessage\"').to.not.be.undefined;\n    })\n    pm.test(\"Respuesta contiene 'Wrong password.'\", () => {\n        pm.expect(pm.response.json().errorMessage, 'Respuesta no cotiene \"Wrong password.\"').include('Wrong password');\n    })\n}\n\n ```\n\n4.1. **Objetivo del script de Tests**\n\n- Verificar que la API de login siempre responde con código HTTP 200.\n    \n- Verificar que el contenido de la respuesta sea coherente con el escenario de login:\n    \n    - Sin error cuando las credenciales son correctas.\n        \n    - Con mensaje y texto de error adecuado cuando usuario o contraseña son incorrectos.\n        \n\n4.2. **Detalle paso a paso**\n\na) **Lectura del escenario**\n\n- jsconst scenario = pm.environment.get(\"LOGIN_SCENARIO\");\n    \n\nb) **Validación del código HTTP**\n\n- pm.test(\"El código de estado es 200\", () => { pm.expect(pm.response.code, 'El códgio de estado NO es 200').to.eql(200);});\n    \n    - Confirma que la API responde con 200 tanto en éxito como en error de credenciales.\n        \n\nc) **Escenario de éxito (****`LOGIN_SCENARIO = \"success\"`****)**\n\n- if (scenario === \"success\") { pm.test(\"Respuesta no cotiene mensaje de error\", () => { pm.expect(pm.response.json().errorMessage, 'la respuesta trae la propiedad \"errorMessage\"').to.be.undefined; })}\n    \n    - La propiedad `errorMessage` no debería existir en el JSON de respuesta.\n        \n    - Indica que el login fue correcto.\n        \n\nd) **Escenario de error por usuario inexistente (****`LOGIN_SCENARIO = \"error_user\"`****)**\n\n- else if (scenario === 'error_user') { pm.test(\"Respuesta contiene mensaje de error\", () => { pm.expect(pm.response.json().errorMessage, 'la respuesta no trae la propiedad \"errorMessage\"').to.not.be.undefined; })\n    \n- pm.test(\"Respuesta contiene 'User does not exist.'\", () => { pm.expect(pm.response.json().errorMessage, 'Respuesta no cotiene \"User does not exist.\"').include('User does not exist'); })}\n    \n    - Se comprueba que el texto del error incluya la cadena `\"User does not exist\"`.\n        \n\ne) **Escenario de error por contraseña incorrecta (por ejemplo** **`LOGIN_SCENARIO = \"error_pass\"`****)**\n\n- else { // password de Usuario incorrecto pm.test(\"Respuesta contiene mensaje de error\", () => { pm.expect(pm.response.json().errorMessage, 'la respuesta no trae la propiedad \"errorMessage\"').to.not.be.undefined; }) pm.test(\"Respuesta contiene 'Wrong password.'\", () => { pm.expect(pm.response.json().errorMessage, 'Respuesta no cotiene \"Wrong password.\"').include('Wrong password'); })}\n    \n    - Igual que en el caso anterior, primero se verifica que exista `errorMessage`.\n        \n    - Luego se comprueba que el texto del error incluya `\"Wrong password\"`.\n        \n\n---\n\n**5\\. Resumen de comportamiento por escenario**\n\n5.1. **`LOGIN_SCENARIO = \"success\"`** **(login correcto)**\n\n- Pre-request:\n    \n    - `username` global = `camilo_test`.\n        \n    - `password` global = `1234`.\n        \n- Request:\n    \n    - Se envían credenciales válidas.\n        \n- Tests:\n    \n    - Código de estado 200.\n        \n    - La respuesta **no** contiene `errorMessage`.\n        \n\n5.2. **`LOGIN_SCENARIO = \"error_user\"`** **(usuario inexistente)**\n\n- Pre-request:\n    \n    - `username` global = valor aleatorio (`usernameError`).\n        \n    - `password` global = `1234` (contraseña correcta).\n        \n- Request:\n    \n    - Se envían credenciales con usuario inválido/inexistente.\n        \n- Tests:\n    \n    - Código de estado 200.\n        \n    - La respuesta contiene `errorMessage`.\n        \n    - `errorMessage` incluye el texto `\"User does not exist\"`.\n        \n\n5.3. **`LOGIN_SCENARIO = \"error_pass\"`** **(contraseña incorrecta)**\n\n- Pre-request:\n    \n    - `username` global = `camilo_test` (usuario válido).\n        \n    - `password` global = valor aleatorio (`passwordError`).\n        \n- Request:\n    \n    - Se envían credenciales con usuario válido y contraseña incorrecta.\n        \n- Tests:\n    \n    - Código de estado 200.\n        \n    - La respuesta contiene `errorMessage`.\n        \n    - `errorMessage` incluye el texto `\"Wrong password\"`.",
+            "type": "text/plain"
+          },
+          "url": {
+            "host": [
+              "{{BASE_URL}}login"
+            ],
+            "query": [],
+            "variable": []
+          },
+          "method": "POST",
+          "body": {
+            "mode": "raw",
+            "raw": "{\r\n    \"username\": \"{{username}}\",\r\n    \"password\": \"{{password}}\"\r\n}",
+            "options": {
+              "raw": {
+                "language": "json"
+              }
+            }
+          }
+        },
+        "response": [],
+        "event": [
+          {
+            "listen": "prerequest",
+            "script": {
+              "id": "671ae0f2-b6dc-42a7-bbe0-5f9ed2f0b2e6",
+              "type": "text/javascript",
+              "packages": {},
+              "exec": [
+                "const usernameError = Math.random().toString(36).replace(/[^a-z0-9]/gi, '').slice(0, 10);\r",
+                "const passwordError = Math.random().toString(36).replace(/[^a-z0-9]/gi, '').slice(0, 10);\r",
+                "const scenario = pm.environment.get(\"LOGIN_SCENARIO\");\r",
+                "\r",
+                "if (scenario === \"success\") {\r",
+                "    // Set de variable global para username\r",
+                "    pm.globals.set(\"username\", 'camilo_test');\r",
+                "    pm.globals.set(\"password\", '1234');\r",
+                "} else if (scenario === 'error_user') {\r",
+                "    pm.globals.set(\"username\", usernameError); // Escenario de error\r",
+                "    pm.globals.set('password', '1234')\r",
+                "} else {\r",
+                "    pm.globals.set(\"username\", 'camilo_test'); // Escenario de error\r",
+                "    pm.globals.set('password', passwordError)\r",
+                "}"
+              ],
+              "_lastExecutionId": "1a1cb10b-477c-40dd-a4b0-7dabe88c6b1c"
+            }
+          },
+          {
+            "listen": "test",
+            "script": {
+              "id": "96857bde-3aef-4e28-9904-8c5eab157c95",
+              "type": "text/javascript",
+              "packages": {},
+              "exec": [
+                "\r",
+                "const scenario = pm.environment.get(\"LOGIN_SCENARIO\");\r",
+                "// Validar 200 para cualquier respuesta (existente o no el usuario en ambos casos responde 200)\r",
+                "pm.test(\"El código de estado es 200\", () => {\r",
+                "    pm.expect(pm.response.code, 'El códgio de estado NO es 200').to.eql(200);\r",
+                "})\r",
+                "if (scenario === \"success\") {\r",
+                "    // Usuario y password correcto en login\r",
+                "    pm.test(\"Respuesta no cotiene mensaje de error\", () => {\r",
+                "        pm.expect(pm.response.json().errorMessage, 'la respuesta trae la propiedad \"errorMessage\"').to.be.undefined;\r",
+                "    })\r",
+                "} else if (scenario === 'error_user') {\r",
+                "    // nombre de Usuario incorrecto\r",
+                "    pm.test(\"Respuesta contiene mensaje de error\", () => {\r",
+                "        pm.expect(pm.response.json().errorMessage, 'la respuesta no trae la propiedad \"errorMessage\"').to.not.be.undefined;\r",
+                "    })\r",
+                "\r",
+                "    pm.test(\"Respuesta contiene 'User does not exist.'\", () => {\r",
+                "        pm.expect(pm.response.json().errorMessage, 'Respuesta no cotiene \"User does not exist.\"').include('User does not exist');\r",
+                "    })\r",
+                "} else {\r",
+                "    // password de Usuario incorrecto\r",
+                "    pm.test(\"Respuesta contiene mensaje de error\", () => {\r",
+                "        pm.expect(pm.response.json().errorMessage, 'la respuesta no trae la propiedad \"errorMessage\"').to.not.be.undefined;\r",
+                "    })\r",
+                "\r",
+                "    pm.test(\"Respuesta contiene 'Wrong password.'\", () => {\r",
+                "        pm.expect(pm.response.json().errorMessage, 'Respuesta no cotiene \"Wrong password.\"').include('Wrong password');\r",
+                "    })\r",
+                "}\r",
+                ""
+              ],
+              "_lastExecutionId": "38307772-9ded-49be-828e-e4055e31eb8d"
+            }
+          }
+        ]
+      }
+    ],
+    "event": [],
+    "variable": [],
+    "info": {
+      "_postman_id": "a2719fb1-38a1-4680-b080-f4d7402f9723",
+      "name": "Demoblaze - Auth API Tests",
+      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    }
+  },
+  "environment": {
+    "_": {
+      "postman_variable_scope": "environment",
+      "postman_exported_at": "2026-01-21T05:41:38.921Z",
+      "postman_exported_using": "Postman/11.80.4"
+    },
+    "id": "cbddbd0d-44f7-4d53-b85b-60e66d5cd32d",
+    "name": "test-env",
+    "values": [
+      {
+        "type": "any",
+        "value": "https://api.demoblaze.com/",
+        "key": "BASE_URL"
+      },
+      {
+        "type": "any",
+        "value": "error",
+        "key": "SIGNUP_SCENARIO"
+      },
+      {
+        "type": "any",
+        "value": "success",
+        "key": "LOGIN_SCENARIO"
+      },
+      {
+        "type": "any",
+        "value": "success",
+        "key": "SIGNUP_SCENARIO"
+      },
+      {
+        "type": "any",
+        "value": "error_pass",
+        "key": "LOGIN_SCENARIO"
+      },
+      {
+        "type": "any",
+        "value": "error_user",
+        "key": "LOGIN_SCENARIO"
+      }
+    ]
+  },
+  "globals": {
+    "_": {
+      "postman_variable_scope": "globals",
+      "postman_exported_at": "2026-01-22T02:32:57.889Z",
+      "postman_exported_using": "Postman/11.0.0"
+    },
+    "id": "781cceab-8855-4118-b723-39f4221a2b8d",
+    "name": "Globals",
+    "values": [
+      {
+        "description": {
+          "content": "",
+          "type": "text/plain"
+        },
+        "type": "any",
+        "value": "0wdncs2rmw",
+        "key": "username"
+      },
+      {
+        "description": {
+          "content": "",
+          "type": "text/plain"
+        },
+        "type": "any",
+        "value": "1234",
+        "key": "password"
+      }
+    ]
+  },
+  "run": {
+    "stats": {
+      "iterations": {
+        "total": 1,
+        "pending": 0,
+        "failed": 0
+      },
+      "items": {
+        "total": 2,
+        "pending": 0,
+        "failed": 0
+      },
+      "scripts": {
+        "total": 4,
+        "pending": 0,
+        "failed": 0
+      },
+      "prerequests": {
+        "total": 2,
+        "pending": 0,
+        "failed": 0
+      },
+      "requests": {
+        "total": 2,
+        "pending": 0,
+        "failed": 0
+      },
+      "tests": {
+        "total": 2,
+        "pending": 0,
+        "failed": 0
+      },
+      "assertions": {
+        "total": 5,
+        "pending": 0,
+        "failed": 0
+      },
+      "testScripts": {
+        "total": 2,
+        "pending": 0,
+        "failed": 0
+      },
+      "prerequestScripts": {
+        "total": 2,
+        "pending": 0,
+        "failed": 0
+      }
+    },
+    "timings": {
+      "responseAverage": 277.5,
+      "responseMin": 181,
+      "responseMax": 374,
+      "responseSd": 96.5,
+      "dnsAverage": 0,
+      "dnsMin": 0,
+      "dnsMax": 0,
+      "dnsSd": 0,
+      "firstByteAverage": 0,
+      "firstByteMin": 0,
+      "firstByteMax": 0,
+      "firstByteSd": 0,
+      "started": 1769051955304,
+      "completed": 1769051956032
+    },
+    "executions": [
+      {
+        "cursor": {
+          "position": 0,
+          "iteration": 0,
+          "length": 2,
+          "cycles": 1,
+          "empty": false,
+          "eof": false,
+          "bof": true,
+          "cr": false,
+          "ref": "1feb40ef-e7c2-42e0-beb0-293aebd4d7ab",
+          "httpRequestId": "8dc8bacc-2ca6-40bd-a41c-b4fa69094d92"
+        },
+        "item": {
+          "id": "e6f05b7f-3f21-4c0d-b622-b2b61d8c93d7",
+          "name": "Signup",
+          "request": {
+            "description": {
+              "content": "**1\\. Request: Signup**\n\n1.1. **Descripción general**\n\n- **Nombre de la request:** Signup\n    \n- **Método:** POST\n    \n- **URL:** `{{BASE_URL}}signup`\n    \n\n1.2. **Body (JSON)**\n\nEl body de la petición envía el usuario y la contraseña usando variables de Postman:\n\nJSON\n\n```\n{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}\n\n ```\n\n---\n\n**2\\. Variables utilizadas**\n\n2.1. **Variables de entorno (Environment)**\n\n- **BASE_URL**\n    \n    - valor base: `https://api.demoblaze.com/`\n        \n    - Se utiliza en la URL de la request como `{{BASE_URL}}`.\n        \n- **SIGNUP_SCENARIO**\n    \n    - Valores esperados:\n        \n        - `\"success\"` → escenario de registro exitoso.\n            \n        - Otros valores (por ejemplo `\"error\"`) → escenario de error controlado.\n            \n    - Esta variable controla el comportamiento tanto del script de Pre-request como del script de Tests.\n        \n\n2.2. **Variables globales (Globals)**\n\n- **username**\n    \n    - Se usa en el body como `{{username}}`.\n        \n    - Su valor se define en el script de Pre-request, dependiendo del escenario.\n        \n- **password**\n    \n    - Se usa en el body como `{{password}}`.\n        \n    - En tu captura actual, el valor está definido directamente como variable global.\n        \n    - Opcionalmente, puede ser seteado también desde el Pre-request script.\n        \n\n---\n\n**3\\. Script de Pre-request**\n\nCódigo actual:\n\njs\n\n```\n// Generar username aleatorio\nconst username = 'test_' + Math.random().toString(36).replace(/[^a-z0-9]/gi, '').slice(0, 5);\nconst password = '1234';\nconst scenario = pm.environment.get(\"SIGNUP_SCENARIO\");\nif (scenario === \"success\") {\n    // Set de variable global para username\n    pm.globals.set(\"username\", username);\n} else {\n    pm.globals.set(\"username\", \"camilo_test\"); // Escenario de error\n}\n\n ```\n\n3.1. **Objetivo del Pre-request**\n\nEl objetivo de este script es:\n\n- Generar datos de prueba antes de ejecutar la petición.\n    \n- Configurar el valor de la variable global `username` según el escenario definido en el entorno (`SIGNUP_SCENARIO`).\n    \n\n3.2. **Detalle paso a paso**\n\na) **Generación de username aleatorio**\n\n- const username = 'test_' + Math.random().toString(36).replace(/\\[^a-z0-9\\]/gi, '').slice(0, 5);\n    \n    - `Math.random().toString(36)` genera una cadena aleatoria con caracteres\n        \n    - `replace(/[^a-z0-9]/gi, '')` elimina cualquier carácter que no sea letra o número.\n        \n    - `slice(0, 5)` toma solo los primeros 5 caracteres limpios.\n        \n    - Resultado final: algo del estilo `test_ab3x9`.\n        \n\nb) **Definición de password fijo**\n\n- const password = '1234';\n    \n- Password de usuario ya registrado y conocido (camilo_test)\n    \n\nc) **Lectura del escenario desde el entorno**\n\n- const scenario = pm.environment.get(\"SIGNUP_SCENARIO\");\n    \n\nd) **Asignación de la variable global** **`username`** **según el escenario**\n\n- if (scenario === \"success\") { pm.globals.set(\"username\", username);}\n    \n    - Se guarda el username aleatorio en la variable global `username`.\n        \n    - La intención es simular el registro de un usuario nuevo que no existe aún.\n        \n- else { pm.globals.set(\"username\", \"camilo_test\"); // Escenario de error}\n    \n    - Se fija el valor `camilo_test` como username.\n        \n    - Se asume que este usuario ya existe, con lo cual se probará el manejo de errores en el endpoint.\n        \n\n---\n\n**4\\. Script de Tests (post-response)**\n\nCódigo actual:\n\njs\n\n```\nconst scenario = pm.environment.get(\"SIGNUP_SCENARIO\");\n// Validar 200 para cualquier respuesta (existente o no el usuario en ambos casos responde 200)\npm.test(\"El código de estado es 200\", () => {\n    pm.expect(pm.response.code, 'El códgio de estado NO es 200').to.eql(200);\n})\nif (scenario === \"success\") {\n    // Crear un nuevo usuario en signup\n    pm.test(\"Respuesta no cotiene mensajed de error\", () => {\n        pm.expect(pm.response.json().errorMessage, 'la respuesta trae la propiedad \"errorMessage\"').to.be.undefined;\n    })\n} else {\n    // Crear un usuario con datos inválidos en signup\n    pm.test(\"Respuesta cotiene mensaje de error\", () => {\n        pm.expect(pm.response.json().errorMessage, 'la respuesta no trae la propiedad \"errorMessage\"').to.not.be.undefined;\n    })\n}\n\n ```\n\n4.1. **Objetivo del script de Tests**\n\n- Validar que la API siempre responda con código HTTP 200.\n    \n- Validar que el contenido de la respuesta sea coherente con el escenario definido:\n    \n    - Sin mensaje de error en escenario de éxito.\n        \n    - Con mensaje de error en escenario de fallo.\n        \n\n4.2. **Detalle paso a paso**\n\na) **Lectura del escenario**\n\n- const scenario = pm.environment.get(\"SIGNUP_SCENARIO\");\n    \n\nb) **Validación del código de estado**\n\n- pm.test(\"El código de estado es 200\", () => { pm.expect(pm.response.code, 'El códgio de estado NO es 200').to.eql(200);});\n    \n    - Este test verifica que, tanto si el usuario se registra correctamente como si ya existía, la API responde siempre con 200.\n        \n\nc) **Validación de la respuesta en escenario \"success\"**\n\n- jsif (scenario === \"success\") { pm.test(\"Respuesta no cotiene mensajed de error\", () => { pm.expect(pm.response.json().errorMessage, 'la respuesta trae la propiedad \"errorMessage\"').to.be.undefined; });}\n    \n    - Se espera que la respuesta **no contenga** la propiedad `errorMessage`.\n        \n    - Indica que el registro fue exitoso y no hubo errores de negocio.\n        \n\nd) **Validación de la respuesta en escenario de error**\n\n- else { pm.test(\"Respuesta cotiene mensaje de error\", () => { pm.expect(pm.response.json().errorMessage, 'la respuesta no trae la propiedad \"errorMessage\"').to.not.be.undefined; });}\n    \n    - Se espera que la respuesta **sí contenga** la propiedad `errorMessage`.\n        \n    - Indica que la API está devolviendo un mensaje de error cuando se intenta registrar un usuario inválido o ya existente.\n        \n\n---\n\n**5\\. Resumen de comportamiento por escenario**\n\n5.1. **Escenario de éxito (****`SIGNUP_SCENARIO = \"success\"`****)**\n\n- Pre-request:\n    \n    - Genera un username aleatorio (`test_`).\n        \n    - Asigna ese valor a la variable global `username`.\n        \n- Request:\n    \n    - Envía un usuario nuevo en el body.\n        \n- Tests:\n    \n    - Verifica que el código HTTP sea 200.\n        \n    - Verifica que la respuesta no tenga la propiedad `errorMessage`.\n        \n\n5.2. **Escenario de error (****`SIGNUP_SCENARIO ≠ \"success\"`****, por ejemplo** **`\"error\"`****)**\n\n- Pre-request:\n    \n    - Asigna el valor fijo `camilo_test` a la variable global `username`.\n        \n- Request:\n    \n    - Envía un usuario que se asume ya existente o inválido.\n        \n- Tests:\n    \n    - Verifica que el código HTTP sea 200.\n        \n    - Verifica que la respuesta sí tenga la propiedad `errorMessage`.\n        \n\n---",
+              "type": "text/plain"
+            },
+            "url": {
+              "host": [
+                "{{BASE_URL}}signup"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"username\": \"{{username}}\",\r\n    \"password\": \"{{password}}\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "490b785b-00a2-4fd5-852a-a97974a59166",
+                "type": "text/javascript",
+                "packages": {},
+                "exec": [
+                  "const scenario = pm.environment.get(\"SIGNUP_SCENARIO\");\r",
+                  "// Validar 200 para cualquier respuesta (existente o no el usuario en ambos casos responde 200)\r",
+                  "pm.test(\"El código de estado es 200\", () => {\r",
+                  "    pm.expect(pm.response.code, 'El códgio de estado NO es 200').to.eql(200);\r",
+                  "})\r",
+                  "if (scenario === \"success\") {\r",
+                  "    // Crear un nuevo usuario en signup\r",
+                  "    pm.test(\"Respuesta no cotiene mensajed de error\", () => {\r",
+                  "        pm.expect(pm.response.json().errorMessage, 'la respuesta trae la propiedad \"errorMessage\"').to.be.undefined;\r",
+                  "    })\r",
+                  "} else {\r",
+                  "    // Crear un usuario con datos inválidos en signup\r",
+                  "    pm.test(\"Respuesta cotiene mensaje de error\", () => {\r",
+                  "        pm.expect(pm.response.json().errorMessage, 'la respuesta no trae la propiedad \"errorMessage\"').to.not.be.undefined;\r",
+                  "    })\r",
+                  "}\r",
+                  ""
+                ],
+                "_lastExecutionId": "5b2c5083-130c-4129-948f-18dffe226345"
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "id": "79000560-d63a-4a0a-b4cc-c5ba4b3904a4",
+                "type": "text/javascript",
+                "packages": {},
+                "exec": [
+                  "// Generar username aleatorio\r",
+                  "const username = 'test_' + Math.random().toString(36).replace(/[^a-z0-9]/gi, '').slice(0, 5);\r",
+                  "const password = '1234';\r",
+                  "\r",
+                  "const scenario = pm.environment.get(\"SIGNUP_SCENARIO\");\r",
+                  "if (scenario === \"success\") {\r",
+                  "    // Set de variable global para username\r",
+                  "    pm.globals.set(\"username\", username);\r",
+                  "} else {\r",
+                  "    pm.globals.set(\"username\", \"camilo_test\"); // Escenario de error\r",
+                  "}"
+                ],
+                "_lastExecutionId": "bfab7dd1-6d8c-4485-85a3-52e80036c193"
+              }
+            }
+          ]
+        },
+        "request": {
+          "description": {
+            "content": "**1\\. Request: Signup**\n\n1.1. **Descripción general**\n\n- **Nombre de la request:** Signup\n    \n- **Método:** POST\n    \n- **URL:** `https://api.demoblaze.com/signup`\n    \n\n1.2. **Body (JSON)**\n\nEl body de la petición envía el usuario y la contraseña usando variables de Postman:\n\nJSON\n\n```\n{\n  \"username\": \"test_0ape5\",\n  \"password\": \"\"\n}\n\n ```\n\n---\n\n**2\\. Variables utilizadas**\n\n2.1. **Variables de entorno (Environment)**\n\n- **BASE_URL**\n    \n    - valor base: `https://api.demoblaze.com/`\n        \n    - Se utiliza en la URL de la request como `https://api.demoblaze.com/`.\n        \n- **SIGNUP_SCENARIO**\n    \n    - Valores esperados:\n        \n        - `\"success\"` → escenario de registro exitoso.\n            \n        - Otros valores (por ejemplo `\"error\"`) → escenario de error controlado.\n            \n    - Esta variable controla el comportamiento tanto del script de Pre-request como del script de Tests.\n        \n\n2.2. **Variables globales (Globals)**\n\n- **username**\n    \n    - Se usa en el body como `test_0ape5`.\n        \n    - Su valor se define en el script de Pre-request, dependiendo del escenario.\n        \n- **password**\n    \n    - Se usa en el body como ``.\n        \n    - En tu captura actual, el valor está definido directamente como variable global.\n        \n    - Opcionalmente, puede ser seteado también desde el Pre-request script.\n        \n\n---\n\n**3\\. Script de Pre-request**\n\nCódigo actual:\n\njs\n\n```\n// Generar username aleatorio\nconst username = 'test_' + Math.random().toString(36).replace(/[^a-z0-9]/gi, '').slice(0, 5);\nconst password = '1234';\nconst scenario = pm.environment.get(\"SIGNUP_SCENARIO\");\nif (scenario === \"success\") {\n    // Set de variable global para username\n    pm.globals.set(\"username\", username);\n} else {\n    pm.globals.set(\"username\", \"camilo_test\"); // Escenario de error\n}\n\n ```\n\n3.1. **Objetivo del Pre-request**\n\nEl objetivo de este script es:\n\n- Generar datos de prueba antes de ejecutar la petición.\n    \n- Configurar el valor de la variable global `username` según el escenario definido en el entorno (`SIGNUP_SCENARIO`).\n    \n\n3.2. **Detalle paso a paso**\n\na) **Generación de username aleatorio**\n\n- const username = 'test_' + Math.random().toString(36).replace(/\\[^a-z0-9\\]/gi, '').slice(0, 5);\n    \n    - `Math.random().toString(36)` genera una cadena aleatoria con caracteres\n        \n    - `replace(/[^a-z0-9]/gi, '')` elimina cualquier carácter que no sea letra o número.\n        \n    - `slice(0, 5)` toma solo los primeros 5 caracteres limpios.\n        \n    - Resultado final: algo del estilo `test_ab3x9`.\n        \n\nb) **Definición de password fijo**\n\n- const password = '1234';\n    \n- Password de usuario ya registrado y conocido (camilo_test)\n    \n\nc) **Lectura del escenario desde el entorno**\n\n- const scenario = pm.environment.get(\"SIGNUP_SCENARIO\");\n    \n\nd) **Asignación de la variable global** **`username`** **según el escenario**\n\n- if (scenario === \"success\") { pm.globals.set(\"username\", username);}\n    \n    - Se guarda el username aleatorio en la variable global `username`.\n        \n    - La intención es simular el registro de un usuario nuevo que no existe aún.\n        \n- else { pm.globals.set(\"username\", \"camilo_test\"); // Escenario de error}\n    \n    - Se fija el valor `camilo_test` como username.\n        \n    - Se asume que este usuario ya existe, con lo cual se probará el manejo de errores en el endpoint.\n        \n\n---\n\n**4\\. Script de Tests (post-response)**\n\nCódigo actual:\n\njs\n\n```\nconst scenario = pm.environment.get(\"SIGNUP_SCENARIO\");\n// Validar 200 para cualquier respuesta (existente o no el usuario en ambos casos responde 200)\npm.test(\"El código de estado es 200\", () => {\n    pm.expect(pm.response.code, 'El códgio de estado NO es 200').to.eql(200);\n})\nif (scenario === \"success\") {\n    // Crear un nuevo usuario en signup\n    pm.test(\"Respuesta no cotiene mensajed de error\", () => {\n        pm.expect(pm.response.json().errorMessage, 'la respuesta trae la propiedad \"errorMessage\"').to.be.undefined;\n    })\n} else {\n    // Crear un usuario con datos inválidos en signup\n    pm.test(\"Respuesta cotiene mensaje de error\", () => {\n        pm.expect(pm.response.json().errorMessage, 'la respuesta no trae la propiedad \"errorMessage\"').to.not.be.undefined;\n    })\n}\n\n ```\n\n4.1. **Objetivo del script de Tests**\n\n- Validar que la API siempre responda con código HTTP 200.\n    \n- Validar que el contenido de la respuesta sea coherente con el escenario definido:\n    \n    - Sin mensaje de error en escenario de éxito.\n        \n    - Con mensaje de error en escenario de fallo.\n        \n\n4.2. **Detalle paso a paso**\n\na) **Lectura del escenario**\n\n- const scenario = pm.environment.get(\"SIGNUP_SCENARIO\");\n    \n\nb) **Validación del código de estado**\n\n- pm.test(\"El código de estado es 200\", () => { pm.expect(pm.response.code, 'El códgio de estado NO es 200').to.eql(200);});\n    \n    - Este test verifica que, tanto si el usuario se registra correctamente como si ya existía, la API responde siempre con 200.\n        \n\nc) **Validación de la respuesta en escenario \"success\"**\n\n- jsif (scenario === \"success\") { pm.test(\"Respuesta no cotiene mensajed de error\", () => { pm.expect(pm.response.json().errorMessage, 'la respuesta trae la propiedad \"errorMessage\"').to.be.undefined; });}\n    \n    - Se espera que la respuesta **no contenga** la propiedad `errorMessage`.\n        \n    - Indica que el registro fue exitoso y no hubo errores de negocio.\n        \n\nd) **Validación de la respuesta en escenario de error**\n\n- else { pm.test(\"Respuesta cotiene mensaje de error\", () => { pm.expect(pm.response.json().errorMessage, 'la respuesta no trae la propiedad \"errorMessage\"').to.not.be.undefined; });}\n    \n    - Se espera que la respuesta **sí contenga** la propiedad `errorMessage`.\n        \n    - Indica que la API está devolviendo un mensaje de error cuando se intenta registrar un usuario inválido o ya existente.\n        \n\n---\n\n**5\\. Resumen de comportamiento por escenario**\n\n5.1. **Escenario de éxito (****`SIGNUP_SCENARIO = \"success\"`****)**\n\n- Pre-request:\n    \n    - Genera un username aleatorio (`test_`).\n        \n    - Asigna ese valor a la variable global `username`.\n        \n- Request:\n    \n    - Envía un usuario nuevo en el body.\n        \n- Tests:\n    \n    - Verifica que el código HTTP sea 200.\n        \n    - Verifica que la respuesta no tenga la propiedad `errorMessage`.\n        \n\n5.2. **Escenario de error (****`SIGNUP_SCENARIO ≠ \"success\"`****, por ejemplo** **`\"error\"`****)**\n\n- Pre-request:\n    \n    - Asigna el valor fijo `camilo_test` a la variable global `username`.\n        \n- Request:\n    \n    - Envía un usuario que se asume ya existente o inválido.\n        \n- Tests:\n    \n    - Verifica que el código HTTP sea 200.\n        \n    - Verifica que la respuesta sí tenga la propiedad `errorMessage`.\n        \n\n---",
+            "type": "text/plain"
+          },
+          "url": {
+            "protocol": "https",
+            "path": [
+              "signup"
+            ],
+            "host": [
+              "api",
+              "demoblaze",
+              "com"
+            ],
+            "query": [],
+            "variable": []
+          },
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json",
+              "system": true
+            },
+            {
+              "key": "User-Agent",
+              "value": "PostmanRuntime/7.39.1",
+              "system": true
+            },
+            {
+              "key": "Accept",
+              "value": "*/*",
+              "system": true
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache",
+              "system": true
+            },
+            {
+              "key": "Postman-Token",
+              "value": "6a05aec8-6f7d-4551-9e8c-b6a6c8d2aa93",
+              "system": true
+            },
+            {
+              "key": "Host",
+              "value": "api.demoblaze.com",
+              "system": true
+            },
+            {
+              "key": "Accept-Encoding",
+              "value": "gzip, deflate, br",
+              "system": true
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive",
+              "system": true
+            },
+            {
+              "key": "Content-Length",
+              "value": "55",
+              "system": true
+            }
+          ],
+          "method": "POST",
+          "body": {
+            "mode": "raw",
+            "raw": "{\r\n    \"username\": \"test_0ape5\",\r\n    \"password\": \"\"\r\n}",
+            "options": {
+              "raw": {
+                "language": "json"
+              }
+            }
+          }
+        },
+        "response": {
+          "id": "d9083180-c348-4c4c-ac40-639290c2e6f1",
+          "status": "OK",
+          "code": 200,
+          "header": [
+            {
+              "key": "content-type",
+              "value": "application/json"
+            },
+            {
+              "key": "x-cloud-trace-context",
+              "value": "b16ab425a2ffd495600d7c5ea0599550;o=1"
+            },
+            {
+              "key": "date",
+              "value": "Thu, 22 Jan 2026 03:19:15 GMT"
+            },
+            {
+              "key": "server",
+              "value": "Google Frontend"
+            },
+            {
+              "key": "Content-Length",
+              "value": "3"
+            }
+          ],
+          "stream": {
+            "type": "Buffer",
+            "data": [
+              34,
+              34,
+              10
+            ]
+          },
+          "cookie": [],
+          "responseTime": 374,
+          "responseSize": 3
+        },
+        "id": "e6f05b7f-3f21-4c0d-b622-b2b61d8c93d7",
+        "assertions": [
+          {
+            "assertion": "El código de estado es 200",
+            "skipped": false
+          },
+          {
+            "assertion": "Respuesta no cotiene mensajed de error",
+            "skipped": false
+          }
+        ]
+      },
+      {
+        "cursor": {
+          "ref": "9a45ca3e-aef6-45cd-9bec-1732bb5dbda3",
+          "length": 2,
+          "cycles": 1,
+          "position": 1,
+          "iteration": 0,
+          "httpRequestId": "7e8c2850-3713-4485-89d6-1db809209f23"
+        },
+        "item": {
+          "id": "3e5f228f-02cf-425e-8ad3-d640973ce78e",
+          "name": "Login",
+          "request": {
+            "description": {
+              "content": "**1\\. Request: Login**\n\n1.1. **Descripción general**\n\n- **Nombre de la request:** Login\n    \n- **Método:** POST\n    \n- **URL:** `{{BASE_URL}}login`\n    \n\n1.2. **Body (JSON)**\n\nLa petición envía credenciales usando variables de Postman:\n\nJSON\n\n```\n{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}\n\n ```\n\n---\n\n**2\\. Variables utilizadas**\n\n2.1. **Variables de entorno (Environment)**\n\n- **BASE_URL**\n    \n    - Ejemplo: `https://api.demoblaze.com/`\n        \n    - Se utiliza en la URL como `{{BASE_URL}}`.\n        \n- **LOGIN_SCENARIO**\n    \n    - Define qué tipo de prueba se va a ejecutar para el login.\n        \n    - Valores esperados (según tu captura):\n        \n        - `\"success\"` → login exitoso (usuario y contraseña correctos).\n            \n        - `\"error_user\"` → error porque el usuario no existe.\n            \n        - `\"error_pass\"` → error porque la contraseña es incorrecta.\n            \n    - Esta variable controla tanto el pre-request como los tests.\n        \n\n2.2. **Variables globales (Globals)**\n\n- **username**\n    \n- **password**\n    \n\nEstas variables son las que finalmente se usan en el body:\n\nJSON\n\n```\n{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}\n\n ```\n\nSu valor se ajusta dinámicamente en el script de Pre-request, dependiendo del escenario definido en `LOGIN_SCENARIO`.\n\n---\n\n**3\\. Script de Pre-request**\n\nCódigo actual:\n\njs\n\n```\nconst usernameError = Math.random().toString(36).replace(/[^a-z0-9]/gi, '').slice(0, 10);\nconst passwordError = Math.random().toString(36).replace(/[^a-z0-9]/gi, '').slice(0, 10);\nconst scenario = pm.environment.get(\"LOGIN_SCENARIO\");\nif (scenario === \"success\") {\n    // Set de variable global para username\n    pm.globals.set(\"username\", 'camilo_test');\n    pm.globals.set(\"password\", '1234');\n} else if (scenario === 'error_user') {\n    pm.globals.set(\"username\", usernameError); // Escenario de error\n    pm.globals.set('password', '1234')\n} else {\n    pm.globals.set(\"username\", 'camilo_test'); // Escenario de error\n    pm.globals.set('password', passwordError)\n}\n\n ```\n\n3.1. **Objetivo del Pre-request**\n\n- Preparar los datos de entrada para el login (`username` y `password`) antes de enviar la petición.\n    \n- Simular distintos escenarios de login:\n    \n    - Login correcto.\n        \n    - Usuario inexistente.\n        \n    - Contraseña incorrecta.\n        \n\n3.2. **Detalle paso a paso**\n\na) **Generación de datos de error**\n\n- const usernameError = Math.random().toString(36).replace(/\\[^a-z0-9\\]/gi, '').slice(0, 10);const passwordError = Math.random().toString(36).replace(/\\[^a-z0-9\\]/gi, '').slice(0, 10);\n    \n    - `Math.random().toString(36)` genera una cadena pseudoaleatoria con caracteres `0-9` y `a-z`.\n        \n    - `replace(/[^a-z0-9]/gi, '')` elimina cualquier carácter no alfaumerico.\n        \n    - `slice(0, 10)` se queda con un máximo de 10 caracteres.\n        \n    - `usernameError` se usará como usuario inexistente; `passwordError` como contraseña incorrecta.\n        \n\nb) **Lectura del escenario desde el entorno**\n\n- const scenario = pm.environment.get(\"LOGIN_SCENARIO\");\n    \n\nc) **Asignación de variables globales según el escenario**\n\n- if (scenario === \"success\") { pm.globals.set(\"username\", 'camilo_test'); pm.globals.set(\"password\", '1234');}\n    \n    - Se usa un usuario fijo conocido (`camilo_test`) y una contraseña fija (`1234`).\n        \n    - Se espera que estas credenciales sean válidas en el sistema para que el login sea exitoso.\n        \n- else if (scenario === 'error_user') { pm.globals.set(\"username\", usernameError); // Escenario de error pm.globals.set('password', '1234');}\n    \n    - El `username` se reemplaza por un valor aleatorio que, en teoría, **no existe** en el sistema.\n        \n    - La contraseña se mantiene correcta (`1234`).\n        \n    - Se simula el caso de “usuario no encontrado”.\n        \n- else { pm.globals.set(\"username\", 'camilo_test'); // Escenario de error pm.globals.set('password', passwordError);}\n    \n    - Se usa un usuario válido (`camilo_test`), pero se cambia la contraseña por un `passwordError` aleatorio.\n        \n    - Se simula el caso de “contraseña incorrecta para un usuario existente”.\n        \n\nd) **Relación con el body de la petición**\n\n- JSON{ \"username\": \"{{username}}\", \"password\": \"{{password}}\"}\n    \n    tomará los valores que el Pre-request haya establecido según el escenario.\n    \n\n---\n\n**4\\. Script de Tests (post-response)**\n\nCódigo actual:\n\njs\n\n```\nconst scenario = pm.environment.get(\"LOGIN_SCENARIO\");\n// Validar 200 para cualquier respuesta (existente o no el usuario en ambos casos responde 200)\npm.test(\"El código de estado es 200\", () => {\n    pm.expect(pm.response.code, 'El códgio de estado NO es 200').to.eql(200);\n})\nif (scenario === \"success\") {\n    // Usuario y password correcto en login\n    pm.test(\"Respuesta no cotiene mensaje de error\", () => {\n        pm.expect(pm.response.json().errorMessage, 'la respuesta trae la propiedad \"errorMessage\"').to.be.undefined;\n    })\n} else if (scenario === 'error_user') {\n    // nombre de Usuario incorrecto\n    pm.test(\"Respuesta contiene mensaje de error\", () => {\n        pm.expect(pm.response.json().errorMessage, 'la respuesta no trae la propiedad \"errorMessage\"').to.not.be.undefined;\n    })\n    pm.test(\"Respuesta contiene 'User does not exist.'\", () => {\n        pm.expect(pm.response.json().errorMessage, 'Respuesta no cotiene \"User does not exist.\"').include('User does not exist');\n    })\n} else {\n    // password de Usuario incorrecto\n    pm.test(\"Respuesta contiene mensaje de error\", () => {\n        pm.expect(pm.response.json().errorMessage, 'la respuesta no trae la propiedad \"errorMessage\"').to.not.be.undefined;\n    })\n    pm.test(\"Respuesta contiene 'Wrong password.'\", () => {\n        pm.expect(pm.response.json().errorMessage, 'Respuesta no cotiene \"Wrong password.\"').include('Wrong password');\n    })\n}\n\n ```\n\n4.1. **Objetivo del script de Tests**\n\n- Verificar que la API de login siempre responde con código HTTP 200.\n    \n- Verificar que el contenido de la respuesta sea coherente con el escenario de login:\n    \n    - Sin error cuando las credenciales son correctas.\n        \n    - Con mensaje y texto de error adecuado cuando usuario o contraseña son incorrectos.\n        \n\n4.2. **Detalle paso a paso**\n\na) **Lectura del escenario**\n\n- jsconst scenario = pm.environment.get(\"LOGIN_SCENARIO\");\n    \n\nb) **Validación del código HTTP**\n\n- pm.test(\"El código de estado es 200\", () => { pm.expect(pm.response.code, 'El códgio de estado NO es 200').to.eql(200);});\n    \n    - Confirma que la API responde con 200 tanto en éxito como en error de credenciales.\n        \n\nc) **Escenario de éxito (****`LOGIN_SCENARIO = \"success\"`****)**\n\n- if (scenario === \"success\") { pm.test(\"Respuesta no cotiene mensaje de error\", () => { pm.expect(pm.response.json().errorMessage, 'la respuesta trae la propiedad \"errorMessage\"').to.be.undefined; })}\n    \n    - La propiedad `errorMessage` no debería existir en el JSON de respuesta.\n        \n    - Indica que el login fue correcto.\n        \n\nd) **Escenario de error por usuario inexistente (****`LOGIN_SCENARIO = \"error_user\"`****)**\n\n- else if (scenario === 'error_user') { pm.test(\"Respuesta contiene mensaje de error\", () => { pm.expect(pm.response.json().errorMessage, 'la respuesta no trae la propiedad \"errorMessage\"').to.not.be.undefined; })\n    \n- pm.test(\"Respuesta contiene 'User does not exist.'\", () => { pm.expect(pm.response.json().errorMessage, 'Respuesta no cotiene \"User does not exist.\"').include('User does not exist'); })}\n    \n    - Se comprueba que el texto del error incluya la cadena `\"User does not exist\"`.\n        \n\ne) **Escenario de error por contraseña incorrecta (por ejemplo** **`LOGIN_SCENARIO = \"error_pass\"`****)**\n\n- else { // password de Usuario incorrecto pm.test(\"Respuesta contiene mensaje de error\", () => { pm.expect(pm.response.json().errorMessage, 'la respuesta no trae la propiedad \"errorMessage\"').to.not.be.undefined; }) pm.test(\"Respuesta contiene 'Wrong password.'\", () => { pm.expect(pm.response.json().errorMessage, 'Respuesta no cotiene \"Wrong password.\"').include('Wrong password'); })}\n    \n    - Igual que en el caso anterior, primero se verifica que exista `errorMessage`.\n        \n    - Luego se comprueba que el texto del error incluya `\"Wrong password\"`.\n        \n\n---\n\n**5\\. Resumen de comportamiento por escenario**\n\n5.1. **`LOGIN_SCENARIO = \"success\"`** **(login correcto)**\n\n- Pre-request:\n    \n    - `username` global = `camilo_test`.\n        \n    - `password` global = `1234`.\n        \n- Request:\n    \n    - Se envían credenciales válidas.\n        \n- Tests:\n    \n    - Código de estado 200.\n        \n    - La respuesta **no** contiene `errorMessage`.\n        \n\n5.2. **`LOGIN_SCENARIO = \"error_user\"`** **(usuario inexistente)**\n\n- Pre-request:\n    \n    - `username` global = valor aleatorio (`usernameError`).\n        \n    - `password` global = `1234` (contraseña correcta).\n        \n- Request:\n    \n    - Se envían credenciales con usuario inválido/inexistente.\n        \n- Tests:\n    \n    - Código de estado 200.\n        \n    - La respuesta contiene `errorMessage`.\n        \n    - `errorMessage` incluye el texto `\"User does not exist\"`.\n        \n\n5.3. **`LOGIN_SCENARIO = \"error_pass\"`** **(contraseña incorrecta)**\n\n- Pre-request:\n    \n    - `username` global = `camilo_test` (usuario válido).\n        \n    - `password` global = valor aleatorio (`passwordError`).\n        \n- Request:\n    \n    - Se envían credenciales con usuario válido y contraseña incorrecta.\n        \n- Tests:\n    \n    - Código de estado 200.\n        \n    - La respuesta contiene `errorMessage`.\n        \n    - `errorMessage` incluye el texto `\"Wrong password\"`.",
+              "type": "text/plain"
+            },
+            "url": {
+              "host": [
+                "{{BASE_URL}}login"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"username\": \"{{username}}\",\r\n    \"password\": \"{{password}}\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "id": "671ae0f2-b6dc-42a7-bbe0-5f9ed2f0b2e6",
+                "type": "text/javascript",
+                "packages": {},
+                "exec": [
+                  "const usernameError = Math.random().toString(36).replace(/[^a-z0-9]/gi, '').slice(0, 10);\r",
+                  "const passwordError = Math.random().toString(36).replace(/[^a-z0-9]/gi, '').slice(0, 10);\r",
+                  "const scenario = pm.environment.get(\"LOGIN_SCENARIO\");\r",
+                  "\r",
+                  "if (scenario === \"success\") {\r",
+                  "    // Set de variable global para username\r",
+                  "    pm.globals.set(\"username\", 'camilo_test');\r",
+                  "    pm.globals.set(\"password\", '1234');\r",
+                  "} else if (scenario === 'error_user') {\r",
+                  "    pm.globals.set(\"username\", usernameError); // Escenario de error\r",
+                  "    pm.globals.set('password', '1234')\r",
+                  "} else {\r",
+                  "    pm.globals.set(\"username\", 'camilo_test'); // Escenario de error\r",
+                  "    pm.globals.set('password', passwordError)\r",
+                  "}"
+                ],
+                "_lastExecutionId": "1a1cb10b-477c-40dd-a4b0-7dabe88c6b1c"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "id": "96857bde-3aef-4e28-9904-8c5eab157c95",
+                "type": "text/javascript",
+                "packages": {},
+                "exec": [
+                  "\r",
+                  "const scenario = pm.environment.get(\"LOGIN_SCENARIO\");\r",
+                  "// Validar 200 para cualquier respuesta (existente o no el usuario en ambos casos responde 200)\r",
+                  "pm.test(\"El código de estado es 200\", () => {\r",
+                  "    pm.expect(pm.response.code, 'El códgio de estado NO es 200').to.eql(200);\r",
+                  "})\r",
+                  "if (scenario === \"success\") {\r",
+                  "    // Usuario y password correcto en login\r",
+                  "    pm.test(\"Respuesta no cotiene mensaje de error\", () => {\r",
+                  "        pm.expect(pm.response.json().errorMessage, 'la respuesta trae la propiedad \"errorMessage\"').to.be.undefined;\r",
+                  "    })\r",
+                  "} else if (scenario === 'error_user') {\r",
+                  "    // nombre de Usuario incorrecto\r",
+                  "    pm.test(\"Respuesta contiene mensaje de error\", () => {\r",
+                  "        pm.expect(pm.response.json().errorMessage, 'la respuesta no trae la propiedad \"errorMessage\"').to.not.be.undefined;\r",
+                  "    })\r",
+                  "\r",
+                  "    pm.test(\"Respuesta contiene 'User does not exist.'\", () => {\r",
+                  "        pm.expect(pm.response.json().errorMessage, 'Respuesta no cotiene \"User does not exist.\"').include('User does not exist');\r",
+                  "    })\r",
+                  "} else {\r",
+                  "    // password de Usuario incorrecto\r",
+                  "    pm.test(\"Respuesta contiene mensaje de error\", () => {\r",
+                  "        pm.expect(pm.response.json().errorMessage, 'la respuesta no trae la propiedad \"errorMessage\"').to.not.be.undefined;\r",
+                  "    })\r",
+                  "\r",
+                  "    pm.test(\"Respuesta contiene 'Wrong password.'\", () => {\r",
+                  "        pm.expect(pm.response.json().errorMessage, 'Respuesta no cotiene \"Wrong password.\"').include('Wrong password');\r",
+                  "    })\r",
+                  "}\r",
+                  ""
+                ],
+                "_lastExecutionId": "38307772-9ded-49be-828e-e4055e31eb8d"
+              }
+            }
+          ]
+        },
+        "request": {
+          "description": {
+            "content": "**1\\. Request: Login**\n\n1.1. **Descripción general**\n\n- **Nombre de la request:** Login\n    \n- **Método:** POST\n    \n- **URL:** `https://api.demoblaze.com/login`\n    \n\n1.2. **Body (JSON)**\n\nLa petición envía credenciales usando variables de Postman:\n\nJSON\n\n```\n{\n  \"username\": \"0wdncs2rmw\",\n  \"password\": \"1234\"\n}\n\n ```\n\n---\n\n**2\\. Variables utilizadas**\n\n2.1. **Variables de entorno (Environment)**\n\n- **BASE_URL**\n    \n    - Ejemplo: `https://api.demoblaze.com/`\n        \n    - Se utiliza en la URL como `https://api.demoblaze.com/`.\n        \n- **LOGIN_SCENARIO**\n    \n    - Define qué tipo de prueba se va a ejecutar para el login.\n        \n    - Valores esperados (según tu captura):\n        \n        - `\"success\"` → login exitoso (usuario y contraseña correctos).\n            \n        - `\"error_user\"` → error porque el usuario no existe.\n            \n        - `\"error_pass\"` → error porque la contraseña es incorrecta.\n            \n    - Esta variable controla tanto el pre-request como los tests.\n        \n\n2.2. **Variables globales (Globals)**\n\n- **username**\n    \n- **password**\n    \n\nEstas variables son las que finalmente se usan en el body:\n\nJSON\n\n```\n{\n  \"username\": \"0wdncs2rmw\",\n  \"password\": \"1234\"\n}\n\n ```\n\nSu valor se ajusta dinámicamente en el script de Pre-request, dependiendo del escenario definido en `LOGIN_SCENARIO`.\n\n---\n\n**3\\. Script de Pre-request**\n\nCódigo actual:\n\njs\n\n```\nconst usernameError = Math.random().toString(36).replace(/[^a-z0-9]/gi, '').slice(0, 10);\nconst passwordError = Math.random().toString(36).replace(/[^a-z0-9]/gi, '').slice(0, 10);\nconst scenario = pm.environment.get(\"LOGIN_SCENARIO\");\nif (scenario === \"success\") {\n    // Set de variable global para username\n    pm.globals.set(\"username\", 'camilo_test');\n    pm.globals.set(\"password\", '1234');\n} else if (scenario === 'error_user') {\n    pm.globals.set(\"username\", usernameError); // Escenario de error\n    pm.globals.set('password', '1234')\n} else {\n    pm.globals.set(\"username\", 'camilo_test'); // Escenario de error\n    pm.globals.set('password', passwordError)\n}\n\n ```\n\n3.1. **Objetivo del Pre-request**\n\n- Preparar los datos de entrada para el login (`username` y `password`) antes de enviar la petición.\n    \n- Simular distintos escenarios de login:\n    \n    - Login correcto.\n        \n    - Usuario inexistente.\n        \n    - Contraseña incorrecta.\n        \n\n3.2. **Detalle paso a paso**\n\na) **Generación de datos de error**\n\n- const usernameError = Math.random().toString(36).replace(/\\[^a-z0-9\\]/gi, '').slice(0, 10);const passwordError = Math.random().toString(36).replace(/\\[^a-z0-9\\]/gi, '').slice(0, 10);\n    \n    - `Math.random().toString(36)` genera una cadena pseudoaleatoria con caracteres `0-9` y `a-z`.\n        \n    - `replace(/[^a-z0-9]/gi, '')` elimina cualquier carácter no alfaumerico.\n        \n    - `slice(0, 10)` se queda con un máximo de 10 caracteres.\n        \n    - `usernameError` se usará como usuario inexistente; `passwordError` como contraseña incorrecta.\n        \n\nb) **Lectura del escenario desde el entorno**\n\n- const scenario = pm.environment.get(\"LOGIN_SCENARIO\");\n    \n\nc) **Asignación de variables globales según el escenario**\n\n- if (scenario === \"success\") { pm.globals.set(\"username\", 'camilo_test'); pm.globals.set(\"password\", '1234');}\n    \n    - Se usa un usuario fijo conocido (`camilo_test`) y una contraseña fija (`1234`).\n        \n    - Se espera que estas credenciales sean válidas en el sistema para que el login sea exitoso.\n        \n- else if (scenario === 'error_user') { pm.globals.set(\"username\", usernameError); // Escenario de error pm.globals.set('password', '1234');}\n    \n    - El `username` se reemplaza por un valor aleatorio que, en teoría, **no existe** en el sistema.\n        \n    - La contraseña se mantiene correcta (`1234`).\n        \n    - Se simula el caso de “usuario no encontrado”.\n        \n- else { pm.globals.set(\"username\", 'camilo_test'); // Escenario de error pm.globals.set('password', passwordError);}\n    \n    - Se usa un usuario válido (`camilo_test`), pero se cambia la contraseña por un `passwordError` aleatorio.\n        \n    - Se simula el caso de “contraseña incorrecta para un usuario existente”.\n        \n\nd) **Relación con el body de la petición**\n\n- JSON{ \"username\": \"0wdncs2rmw\", \"password\": \"1234\"}\n    \n    tomará los valores que el Pre-request haya establecido según el escenario.\n    \n\n---\n\n**4\\. Script de Tests (post-response)**\n\nCódigo actual:\n\njs\n\n```\nconst scenario = pm.environment.get(\"LOGIN_SCENARIO\");\n// Validar 200 para cualquier respuesta (existente o no el usuario en ambos casos responde 200)\npm.test(\"El código de estado es 200\", () => {\n    pm.expect(pm.response.code, 'El códgio de estado NO es 200').to.eql(200);\n})\nif (scenario === \"success\") {\n    // Usuario y password correcto en login\n    pm.test(\"Respuesta no cotiene mensaje de error\", () => {\n        pm.expect(pm.response.json().errorMessage, 'la respuesta trae la propiedad \"errorMessage\"').to.be.undefined;\n    })\n} else if (scenario === 'error_user') {\n    // nombre de Usuario incorrecto\n    pm.test(\"Respuesta contiene mensaje de error\", () => {\n        pm.expect(pm.response.json().errorMessage, 'la respuesta no trae la propiedad \"errorMessage\"').to.not.be.undefined;\n    })\n    pm.test(\"Respuesta contiene 'User does not exist.'\", () => {\n        pm.expect(pm.response.json().errorMessage, 'Respuesta no cotiene \"User does not exist.\"').include('User does not exist');\n    })\n} else {\n    // password de Usuario incorrecto\n    pm.test(\"Respuesta contiene mensaje de error\", () => {\n        pm.expect(pm.response.json().errorMessage, 'la respuesta no trae la propiedad \"errorMessage\"').to.not.be.undefined;\n    })\n    pm.test(\"Respuesta contiene 'Wrong password.'\", () => {\n        pm.expect(pm.response.json().errorMessage, 'Respuesta no cotiene \"Wrong password.\"').include('Wrong password');\n    })\n}\n\n ```\n\n4.1. **Objetivo del script de Tests**\n\n- Verificar que la API de login siempre responde con código HTTP 200.\n    \n- Verificar que el contenido de la respuesta sea coherente con el escenario de login:\n    \n    - Sin error cuando las credenciales son correctas.\n        \n    - Con mensaje y texto de error adecuado cuando usuario o contraseña son incorrectos.\n        \n\n4.2. **Detalle paso a paso**\n\na) **Lectura del escenario**\n\n- jsconst scenario = pm.environment.get(\"LOGIN_SCENARIO\");\n    \n\nb) **Validación del código HTTP**\n\n- pm.test(\"El código de estado es 200\", () => { pm.expect(pm.response.code, 'El códgio de estado NO es 200').to.eql(200);});\n    \n    - Confirma que la API responde con 200 tanto en éxito como en error de credenciales.\n        \n\nc) **Escenario de éxito (****`LOGIN_SCENARIO = \"success\"`****)**\n\n- if (scenario === \"success\") { pm.test(\"Respuesta no cotiene mensaje de error\", () => { pm.expect(pm.response.json().errorMessage, 'la respuesta trae la propiedad \"errorMessage\"').to.be.undefined; })}\n    \n    - La propiedad `errorMessage` no debería existir en el JSON de respuesta.\n        \n    - Indica que el login fue correcto.\n        \n\nd) **Escenario de error por usuario inexistente (****`LOGIN_SCENARIO = \"error_user\"`****)**\n\n- else if (scenario === 'error_user') { pm.test(\"Respuesta contiene mensaje de error\", () => { pm.expect(pm.response.json().errorMessage, 'la respuesta no trae la propiedad \"errorMessage\"').to.not.be.undefined; })\n    \n- pm.test(\"Respuesta contiene 'User does not exist.'\", () => { pm.expect(pm.response.json().errorMessage, 'Respuesta no cotiene \"User does not exist.\"').include('User does not exist'); })}\n    \n    - Se comprueba que el texto del error incluya la cadena `\"User does not exist\"`.\n        \n\ne) **Escenario de error por contraseña incorrecta (por ejemplo** **`LOGIN_SCENARIO = \"error_pass\"`****)**\n\n- else { // password de Usuario incorrecto pm.test(\"Respuesta contiene mensaje de error\", () => { pm.expect(pm.response.json().errorMessage, 'la respuesta no trae la propiedad \"errorMessage\"').to.not.be.undefined; }) pm.test(\"Respuesta contiene 'Wrong password.'\", () => { pm.expect(pm.response.json().errorMessage, 'Respuesta no cotiene \"Wrong password.\"').include('Wrong password'); })}\n    \n    - Igual que en el caso anterior, primero se verifica que exista `errorMessage`.\n        \n    - Luego se comprueba que el texto del error incluya `\"Wrong password\"`.\n        \n\n---\n\n**5\\. Resumen de comportamiento por escenario**\n\n5.1. **`LOGIN_SCENARIO = \"success\"`** **(login correcto)**\n\n- Pre-request:\n    \n    - `username` global = `camilo_test`.\n        \n    - `password` global = `1234`.\n        \n- Request:\n    \n    - Se envían credenciales válidas.\n        \n- Tests:\n    \n    - Código de estado 200.\n        \n    - La respuesta **no** contiene `errorMessage`.\n        \n\n5.2. **`LOGIN_SCENARIO = \"error_user\"`** **(usuario inexistente)**\n\n- Pre-request:\n    \n    - `username` global = valor aleatorio (`usernameError`).\n        \n    - `password` global = `1234` (contraseña correcta).\n        \n- Request:\n    \n    - Se envían credenciales con usuario inválido/inexistente.\n        \n- Tests:\n    \n    - Código de estado 200.\n        \n    - La respuesta contiene `errorMessage`.\n        \n    - `errorMessage` incluye el texto `\"User does not exist\"`.\n        \n\n5.3. **`LOGIN_SCENARIO = \"error_pass\"`** **(contraseña incorrecta)**\n\n- Pre-request:\n    \n    - `username` global = `camilo_test` (usuario válido).\n        \n    - `password` global = valor aleatorio (`passwordError`).\n        \n- Request:\n    \n    - Se envían credenciales con usuario válido y contraseña incorrecta.\n        \n- Tests:\n    \n    - Código de estado 200.\n        \n    - La respuesta contiene `errorMessage`.\n        \n    - `errorMessage` incluye el texto `\"Wrong password\"`.",
+            "type": "text/plain"
+          },
+          "url": {
+            "protocol": "https",
+            "path": [
+              "login"
+            ],
+            "host": [
+              "api",
+              "demoblaze",
+              "com"
+            ],
+            "query": [],
+            "variable": []
+          },
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json",
+              "system": true
+            },
+            {
+              "key": "User-Agent",
+              "value": "PostmanRuntime/7.39.1",
+              "system": true
+            },
+            {
+              "key": "Accept",
+              "value": "*/*",
+              "system": true
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache",
+              "system": true
+            },
+            {
+              "key": "Postman-Token",
+              "value": "af81600e-2b2b-4012-85bf-d7a3cb44a538",
+              "system": true
+            },
+            {
+              "key": "Host",
+              "value": "api.demoblaze.com",
+              "system": true
+            },
+            {
+              "key": "Accept-Encoding",
+              "value": "gzip, deflate, br",
+              "system": true
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive",
+              "system": true
+            },
+            {
+              "key": "Content-Length",
+              "value": "59",
+              "system": true
+            }
+          ],
+          "method": "POST",
+          "body": {
+            "mode": "raw",
+            "raw": "{\r\n    \"username\": \"0wdncs2rmw\",\r\n    \"password\": \"1234\"\r\n}",
+            "options": {
+              "raw": {
+                "language": "json"
+              }
+            }
+          }
+        },
+        "response": {
+          "id": "b8ea470c-df59-42e6-93e0-9f4976367832",
+          "status": "OK",
+          "code": 200,
+          "header": [
+            {
+              "key": "content-type",
+              "value": "application/json"
+            },
+            {
+              "key": "vary",
+              "value": "Accept-Encoding"
+            },
+            {
+              "key": "content-encoding",
+              "value": "gzip"
+            },
+            {
+              "key": "x-cloud-trace-context",
+              "value": "e8017fc68176388c600d7c5ea059983e"
+            },
+            {
+              "key": "date",
+              "value": "Thu, 22 Jan 2026 03:19:15 GMT"
+            },
+            {
+              "key": "server",
+              "value": "Google Frontend"
+            },
+            {
+              "key": "Transfer-Encoding",
+              "value": "chunked"
+            }
+          ],
+          "stream": {
+            "type": "Buffer",
+            "data": [
+              123,
+              34,
+              101,
+              114,
+              114,
+              111,
+              114,
+              77,
+              101,
+              115,
+              115,
+              97,
+              103,
+              101,
+              34,
+              58,
+              34,
+              85,
+              115,
+              101,
+              114,
+              32,
+              100,
+              111,
+              101,
+              115,
+              32,
+              110,
+              111,
+              116,
+              32,
+              101,
+              120,
+              105,
+              115,
+              116,
+              46,
+              34,
+              125,
+              10
+            ]
+          },
+          "cookie": [],
+          "responseTime": 181,
+          "responseSize": 40
+        },
+        "id": "3e5f228f-02cf-425e-8ad3-d640973ce78e",
+        "assertions": [
+          {
+            "assertion": "El código de estado es 200",
+            "skipped": false
+          },
+          {
+            "assertion": "Respuesta contiene mensaje de error",
+            "skipped": false
+          },
+          {
+            "assertion": "Respuesta contiene 'User does not exist.'",
+            "skipped": false
+          }
+        ]
+      }
+    ],
+    "transfers": {
+      "responseTotal": 43
+    },
+    "failures": [],
+    "error": null
+  }
+}
