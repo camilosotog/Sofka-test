@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte de Prueba de Carga - Login Load Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px 30px;
+        }
+        
+        .section {
+            margin-bottom: 40px;
+        }
+        
+        .section h2 {
+            color: #667eea;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .metric-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-left: 5px solid #667eea;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .metric-card.success {
+            border-left-color: #10b981;
+        }
+        
+        .metric-card.warning {
+            border-left-color: #f59e0b;
+        }
+        
+        .metric-card.error {
+            border-left-color: #ef4444;
+        }
+        
+        .metric-label {
+            color: #666;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+        
+        .metric-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .metric-card.success .metric-value {
+            color: #10b981;
+        }
+        
+        .metric-card.error .metric-value {
+            color: #ef4444;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+        
+        .status-badge.pass {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status-badge.fail {
+            background-color: #fee2e2;
+            color: #7f1d1d;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        th {
+            background-color: #667eea;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        tr:hover {
+            background-color: #f9fafb;
+        }
+        
+        .threshold-table td:nth-child(2),
+        .threshold-table td:nth-child(3) {
+            text-align: center;
+        }
+        
+        .pass {
+            color: #10b981;
+            font-weight: 600;
+        }
+        
+        .fail {
+            color: #ef4444;
+            font-weight: 600;
+        }
+        
+        .footer {
+            background-color: #f9fafb;
+            padding: 20px 30px;
+            border-top: 1px solid #e5e7eb;
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .summary-text {
+            background-color: #f0f4ff;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        
+        .check-item {
+            padding: 10px;
+            margin: 5px 0;
+            background-color: #f9fafb;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .check-item::before {
+            content: "✓";
+            color: #10b981;
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-right: 10px;
+        }
+        
+        .logo {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">⚡</div>
+            <h1>Reporte de Prueba de Carga</h1>
+            <p>Login Load Test - Demoblaze</p>
+        </div>
+        
+        <div class="content">
+            <!-- Resumen Ejecutivo -->
+            <section class="section">
+                <h2>Resumen Ejecutivo</h2>
+                <div class="summary-text">
+                    <p><strong>Fecha:</strong> 21 de enero de 2026</p>
+                    <p><strong>Prueba:</strong> Login Load Test</p>
+                    <p><strong>Duración:</strong> 2 minutos</p>
+                    <p><strong>Resultado:</strong> ✓ <strong style="color: #10b981;">EXITOSO</strong></p>
+                    <p style="margin-top: 15px;">Se ejecutó una prueba de carga con éxito simulando 20 iteraciones por segundo durante 2 minutos. Todos los umbrales de rendimiento fueron cumplidos sin excepciones.</p>
+                </div>
+            </section>
+            
+            <!-- Métricas Principales -->
+            <section class="section">
+                <h2>Métricas Principales</h2>
+                <div class="metrics-grid">
+                    <div class="metric-card success">
+                        <div class="metric-label">Total de Solicitudes</div>
+                        <div class="metric-value">2,400</div>
+                        <span class="status-badge pass">100% EXITOSAS</span>
+                    </div>
+                    
+                    <div class="metric-card success">
+                        <div class="metric-label">Tasa de Error</div>
+                        <div class="metric-value">0.00%</div>
+                        <span class="status-badge pass">DENTRO DEL RANGO</span>
+                    </div>
+                    
+                    <div class="metric-card success">
+                        <div class="metric-label">Tiempo Promedio de Respuesta</div>
+                        <div class="metric-value">360.91 ms</div>
+                        <span class="status-badge pass">EXCELENTE</span>
+                    </div>
+                    
+                    <div class="metric-card success">
+                        <div class="metric-label">P95 de Respuesta</div>
+                        <div class="metric-value">392.01 ms</div>
+                        <span class="status-badge pass">CUMPLE UMBRAL &lt;1500ms</span>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <div class="metric-label">Tiempo Máximo de Respuesta</div>
+                        <div class="metric-value">698.57 ms</div>
+                        <span class="status-badge pass">DENTRO DEL LÍMITE</span>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <div class="metric-label">Tasa de Iteración</div>
+                        <div class="metric-value">19.95 iters/s</div>
+                        <span class="status-badge pass">CONSISTENTE</span>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Validaciones de Umbral -->
+            <section class="section">
+                <h2>Validaciones de Umbral (Thresholds)</h2>
+                <table class="threshold-table">
+                    <thead>
+                        <tr>
+                            <th>Umbral</th>
+                            <th>Condición</th>
+                            <th>Resultado</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>HTTP Request Duration (P95)</td>
+                            <td>&lt; 1500 ms</td>
+                            <td>392.01 ms</td>
+                            <td class="pass">✓ CUMPLE</td>
+                        </tr>
+                        <tr>
+                            <td>Error Rate</td>
+                            <td>&lt; 3%</td>
+                            <td>0.00%</td>
+                            <td class="pass">✓ CUMPLE</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+            
+            <!-- Validaciones de Checks -->
+            <section class="section">
+                <h2>Validaciones de Checks</h2>
+                <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px;">
+                    <div class="check-item">
+                        <strong>Status es 2xx:</strong> 7,200 / 7,200 (100%)
+                    </div>
+                    <div class="check-item">
+                        <strong>Tiempo de respuesta &lt; 1500ms:</strong> 7,200 / 7,200 (100%)
+                    </div>
+                    <div class="check-item">
+                        <strong>Respuesta contiene token:</strong> 7,200 / 7,200 (100%)
+                    </div>
+                </div>
+                <p style="margin-top: 15px; color: #666;">
+                    <strong>Total de Checks:</strong> 7,200 completados exitosamente (100%)
+                </p>
+            </section>
+            
+            <!-- Estadísticas Detalladas -->
+            <section class="section">
+                <h2>Estadísticas Detalladas de Tiempo de Respuesta</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Métrica</th>
+                            <th>Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Promedio (avg)</td>
+                            <td>360.91 ms</td>
+                        </tr>
+                        <tr>
+                            <td>Mínimo (min)</td>
+                            <td>321.56 ms</td>
+                        </tr>
+                        <tr>
+                            <td>Mediana (med)</td>
+                            <td>357.27 ms</td>
+                        </tr>
+                        <tr>
+                            <td>Máximo (max)</td>
+                            <td>698.58 ms</td>
+                        </tr>
+                        <tr>
+                            <td>Percentil 90 (p90)</td>
+                            <td>380.47 ms</td>
+                        </tr>
+                        <tr>
+                            <td>Percentil 95 (p95)</td>
+                            <td>392.01 ms</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+            
+            <!-- Datos de Red -->
+            <section class="section">
+                <h2>Consumo de Red</h2>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-label">Datos Recibidos</div>
+                        <div class="metric-value">1.5 MB</div>
+                        <p style="margin-top: 10px; color: #666; font-size: 0.9em;">12 kB/s en promedio</p>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <div class="metric-label">Datos Enviados</div>
+                        <div class="metric-value">324 kB</div>
+                        <p style="margin-top: 10px; color: #666; font-size: 0.9em;">2.7 kB/s en promedio</p>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Información de Ejecución -->
+            <section class="section">
+                <h2>Información de Ejecución</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Parámetro</th>
+                            <th>Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Tipo de Ejecutor</td>
+                            <td>constant-arrival-rate</td>
+                        </tr>
+                        <tr>
+                            <td>Tasa de Llegada</td>
+                            <td>20 iteraciones/segundo</td>
+                        </tr>
+                        <tr>
+                            <td>Duración</td>
+                            <td>2 minutos</td>
+                        </tr>
+                        <tr>
+                            <td>VUs Prelocalizados</td>
+                            <td>30</td>
+                        </tr>
+                        <tr>
+                            <td>VUs Máximos</td>
+                            <td>50</td>
+                        </tr>
+                        <tr>
+                            <td>Usuarios Cargados (CSV)</td>
+                            <td>5</td>
+                        </tr>
+                        <tr>
+                            <td>VUs Promedio</td>
+                            <td>7</td>
+                        </tr>
+                        <tr>
+                            <td>VUs Máximos Alcanzados</td>
+                            <td>14</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+            
+            <!-- Conclusiones -->
+            <section class="section">
+                <h2>Conclusiones</h2>
+                <div class="summary-text">
+                    <p><strong>✓ Prueba Completada Exitosamente</strong></p>
+                    <p style="margin-top: 15px;">La prueba de carga del endpoint de login en Demoblaze demostró un rendimiento excelente:</p>
+                    <ul style="margin-top: 10px; margin-left: 20px; line-height: 1.8;">
+                        <li>El sistema manejó 2,400 solicitudes sin errores (0% de tasa de error)</li>
+                        <li>El tiempo promedio de respuesta fue de 360.91 ms, muy por debajo del umbral de 1,500 ms</li>
+                        <li>El percentil 95 (392.01 ms) cumple con el umbral establecido</li>
+                        <li>Todas las validaciones de checks pasaron correctamente (100% de éxito)</li>
+                        <li>El sistema es estable y consistente bajo carga sostenida</li>
+                    </ul>
+                    <p style="margin-top: 15px;"><strong>Recomendación:</strong> El endpoint de login está listo para producción y puede manejar cargas de 20 iteraciones por segundo sin problemas.</p>
+                </div>
+            </section>
+        </div>
+        
+        <div class="footer">
+            <p>Reporte generado el 21 de enero de 2026 | Herramienta: k6 | Endpoint: https://fakestoreapi.com/auth/login</p>
+        </div>
+    </div>
+</body>
+</html>
