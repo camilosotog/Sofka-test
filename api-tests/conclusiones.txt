@@ -1,0 +1,103 @@
+HALLAZGOS POR ENDPOINT
+
+ENDPOINT: POST /signup
+
+Escenario 1: Registro exitoso de usuario nuevo
+
+Comportamiento observado:
+- Status code: 200 OK
+- Body de respuesta: "" (string vacío, solo comillas)
+
+Observación:
+La API responde con código 200 lo cual indica éxito, pero el body de respuesta viene vacío. Sería más útil que la respuesta incluyera algún mensaje de confirmación o el ID del usuario creado para poder validar que el registro fue exitoso.
+
+Escenario 2: Intento de registro con usuario ya existente
+
+Comportamiento observado:
+- Status code: 200 OK
+- Body de respuesta: { "errorMessage": "This user already exist." }
+
+Observación:
+La API retorna status 200 cuando el usuario ya existe, lo cual considero incorrecto. Un código 200 indica que la operación fue exitosa, pero en realidad el registro falló porque el usuario ya existe. Lo esperado sería un código 409 Conflict o al menos un 400 Bad Request para indicar que hubo un problema con la solicitud.
+
+ENDPOINT: POST /login
+
+Escenario 1: Login con credenciales correctas
+
+Comportamiento observado:
+- Status code: 200 OK
+- Body de respuesta: "Auth_token: Y2FtaWxvX3Rlc3QxNzY5NjQ5"
+
+Observación:
+El login exitoso funciona correctamente. Retorna el token de autenticación con status 200.
+
+Escenario 2: Login con contraseña incorrecta
+
+Comportamiento observado:
+- Status code: 200 OK
+- Body de respuesta: { "errorMessage": "Wrong password." }
+
+Observación:
+La API retorna status 200 cuando la contraseña es incorrecta. Esto es un problema porque el cliente no puede distinguir fácilmente entre un login exitoso y uno fallido solo por el status code. Lo correcto sería retornar un 401 Unauthorized para indicar que las credenciales son inválidas.
+
+Escenario 3: Login con usuario que no existe
+
+Comportamiento observado:
+- Status code: 200 OK
+- Body de respuesta: { "errorMessage": "User does not exist." }
+
+Observación:
+Mismo problema que el escenario anterior. La API retorna 200 cuando el usuario no existe. Debería retornar 401 Unauthorized o 404 Not Found para indicar que el usuario no fue encontrado.
+
+Escenario 4: Login sin parámetros en el body
+
+Comportamiento observado:
+- Status code: 200 OK
+- Body de respuesta: { "errorMessage": "Bad parameter, missing username" }
+
+Observación:
+Cuando no se envían los parámetros requeridos, la API responde con 200 en lugar de 400 Bad Request. Un código 400 sería lo apropiado para indicar que la solicitud está mal formada o le faltan parámetros obligatorios.
+
+PROBLEMAS IDENTIFICADOS
+
+1. Uso incorrecto de códigos HTTP
+
+La API siempre responde con código 200 independientemente de si la operación fue exitosa o no. Esto dificulta el manejo de errores en el cliente porque hay que parsear el body para determinar si hubo un error.
+
+Códigos sugeridos:
+- 200 OK: Solo para operaciones exitosas
+- 400 Bad Request: Parámetros faltantes o mal formados
+- 401 Unauthorized: Credenciales incorrectas
+- 404 Not Found: Usuario no existe
+- 409 Conflict: Usuario ya existe en registro
+
+2. Respuesta vacía en registro exitoso
+
+El endpoint de signup no retorna información útil cuando el registro es exitoso. Solo devuelve un string vacío, lo que hace difícil confirmar que el usuario fue creado correctamente.
+
+3. Inconsistencia en formato de respuesta
+
+Las respuestas de error vienen en formato JSON con la propiedad "errorMessage", pero las respuestas exitosas vienen como string planoo vacío.
+
+VALIDACIONES REALIZADAS
+
+Signup:
+- Validar código de estado 200
+- Validar presencia/ausencia de errorMessage según escenario
+
+Login:
+- Validar código de estado 200
+- Validar presencia/ausencia de errorMessage según escenario
+- Validar mensaje específico "User does not exist." cuando aplica
+- Validar mensaje específico "Wrong password." cuando aplica
+
+CONCLUSIONES
+
+Las pruebas de API revelaron que los endpoints funcionan en términos de lógica de negocio (el registro y login hacen lo que deben hacer), pero hay problemas en el diseño de la API en cuanto al uso de códigos HTTP.
+
+El principal problema es que la API siempre retorna 200 OK, incluso en casos de error. Esto va en contra de las mejores prácticas de diseño de APIs REST y puede causar problemas de integración con clientes que esperan códigos de error estándar.
+
+Recomendaciones:
+- Implementar códigos de estado HTTP apropiados para cada escenario
+- Estandarizar el formato de respuesta (siempre JSON)
+- Incluir información útil en respuestas exitosas

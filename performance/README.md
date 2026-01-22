@@ -78,30 +78,7 @@ k6 run scripts/login_load_test.js --out json=reports/results.json
 
 ---
 
-## Interpretación de Resultados
+## NOTA:
+Aunque no se debe hacer solo por esta vez y tratarse de prueba tecnica se publicará los reportes en repositorio
 
-### Métricas Principales
-
-#### 1. **http_req_duration** - Tiempo de Respuesta HTTP
-- **Promedio (avg):** Tiempo promedio de respuesta
-- **Mínimo (min):** Respuesta más rápida
-- **Máximo (max):** Respuesta más lenta
-- **Percentil 95 (p95):** El 95% de las respuestas estuvieron por debajo de este valor
-
-**Umbral Actual:** P95 < 1500 ms
-
-#### 2. **http_req_failed** - Solicitudes Fallidas
-- Porcentaje de solicitudes que no recibieron respuesta 2xx
-- **Ideal:** 0%
-
-#### 3. **error_rate** (Métrica Personalizada) - Tasa de Error
-- Proporción de solicitudes que no pasaron validaciones
-- **Umbral Actual:** < 3%
-
-#### 4. **checks** - Validaciones de Negocio
-```
-sttus es 2xx                - Valida status HTTP 200-299
-tiempo de respuesta < 1500ms - Valida límite de rendimiento
-respuesta contiene token     - Valida contenido de respuesta
-```
-
+---
